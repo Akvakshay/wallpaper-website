@@ -11,7 +11,7 @@ import model.Wallpaper;
 
 public class WallpaperDAO {
 
-	public List<Wallpaper> getWallpapers(int limit, int offset) {
+	public List<Wallpaper> getWallpapers(String tagstr, int categoryId, int limit, int offset) {
 
 		List<Wallpaper> list = new ArrayList<>();
 
@@ -19,10 +19,90 @@ public class WallpaperDAO {
 
 			Connection con = DBConnection.getConnection();
 
-			PreparedStatement ps = con.prepareStatement("SELECT * FROM HDwallpapers LIMIT ? OFFSET ?");
+			PreparedStatement ps;
 
-			ps.setInt(1, limit);
-			ps.setInt(2, offset);
+			/* CASE 1 — No search, show all */
+
+			if (tagstr == null || tagstr.trim().isEmpty()) {
+
+				if (categoryId == 0) {
+
+					ps = con.prepareStatement(
+
+							"SELECT * FROM HDwallpapers " + "ORDER BY id DESC LIMIT ? OFFSET ?"
+
+					);
+
+					ps.setInt(1, limit);
+					ps.setInt(2, offset);
+
+				}
+
+				/* CASE 2 — Category only */
+
+				else {
+
+					ps = con.prepareStatement(
+
+							"SELECT * FROM HDwallpapers " + "WHERE category_id=? " + "ORDER BY id DESC LIMIT ? OFFSET ?"
+
+					);
+
+					ps.setInt(1, categoryId);
+					ps.setInt(2, limit);
+					ps.setInt(3, offset);
+
+				}
+
+			}
+
+			/* CASE 3 — Global Search */
+
+			else {
+
+				if (categoryId == 0) {
+
+					ps = con.prepareStatement(
+
+							"SELECT * FROM HDwallpapers " + "WHERE tags LIKE ? " + "OR image_url LIKE ? "
+									+ "ORDER BY id DESC LIMIT ? OFFSET ?"
+
+					);
+
+					ps.setString(1, "%" + tagstr + "%");
+
+					ps.setString(2, "%" + tagstr + "%");
+
+					ps.setInt(3, limit);
+					ps.setInt(4, offset);
+
+				}
+
+				/* CASE 4 — Search inside category */
+
+				else {
+
+					ps = con.prepareStatement(
+
+							"SELECT * FROM HDwallpapers " + "WHERE category_id=? "
+									+ "AND (tags LIKE ? OR image_url LIKE ?) " + "ORDER BY id DESC LIMIT ? OFFSET ?"
+
+					);
+
+					ps.setInt(1, categoryId);
+
+					ps.setString(2, "%" + tagstr + "%");
+
+					ps.setString(3, "%" + tagstr + "%");
+
+					ps.setInt(4, limit);
+					ps.setInt(5, offset);
+
+				}
+
+			}
+
+			/* Execute */
 
 			ResultSet rs = ps.executeQuery();
 
@@ -31,17 +111,23 @@ public class WallpaperDAO {
 				Wallpaper w = new Wallpaper();
 
 				w.setId(rs.getInt("id"));
+
 				w.setTitle(rs.getString("title"));
+
 				w.setImagePath(rs.getString("image_url"));
 
 				list.add(w);
+
 			}
 
 		} catch (Exception e) {
+
 			e.printStackTrace();
+
 		}
 
 		return list;
 
 	}
+
 }

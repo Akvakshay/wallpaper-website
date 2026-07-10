@@ -53,26 +53,39 @@ ul li a:hover {
 	color: black;
 }
 
-/* CARD */
 .wallpaper-card {
+	height: 300px;
 	border-radius: 10px;
 	overflow: hidden;
-	position: relative;
+	border-radius: 10px;
 }
 
 .wallpaper-img {
 	width: 100%;
-	height: 100%;
+	height: 220px;
 	object-fit: cover;
+	background-color: #eee;
 }
 
-.wallpaper-img {
-	width: 100%;
-	height: 100%;
-	object-fit: cover;
+.card-body {
+	height: 80px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
 }
 
-/* DOWNLOAD */
+.card-title {
+	font-size: 16px;
+	font-weight: 600;
+	margin: 0;
+}
+
+.download-icon {
+	width: 28px;
+	height: 28px;
+	cursor: pointer;
+}
+
 .download-btn {
 	position: absolute;
 	top: 10px;
@@ -82,9 +95,9 @@ ul li a:hover {
 	padding: 6px;
 }
 
-.download-icon {
-	width: 26px;
-	height: 26px;
+.download-btn:hover {
+	background: white;
+	transform: scale(1.1);
 }
 </style>
 
@@ -118,12 +131,10 @@ ul li a:hover {
 						<select name="category" id="categoryId"
 						onchange="changeCategory()">
 
-							<option value="0">All</option>
 							<option value="1">Nature</option>
 							<option value="2">Space</option>
 							<option value="3">Vehicle</option>
 							<option value="4">City</option>
-							<option value="5">Games</option>
 
 					</select></li>
 				</ul>
@@ -152,14 +163,10 @@ ul li a:hover {
 				<!-- Right menu -->
 				<ul class="navbar-nav ms-auto">
 
-					<li class="nav-item"><a class="nav-link" href="Logout">
-
-							Logout </a></li>
-
-				<!-- <li class="nav-item"><a class="nav-link" href="login.html">Login</a>
+					<li class="nav-item"><a class="nav-link" href="login.html">Login</a>
 					<li class="nav-item"><a class="nav-link" href="SignUp.html">SignUp</a>
 
-					</li>  -->	
+					</li>
 				</ul>
 
 
@@ -184,13 +191,9 @@ ul li a:hover {
 
 let page = 1;
 
-let currentCategory = 0; // show ALL first
+let currentCategory = 1; // default category
 
-let isLoading = false;
-
-let hasMoreData = true;
-
-/* CATEGORY CHANGE */
+/* When category changes */
 
 function changeCategory(){
 
@@ -199,106 +202,58 @@ document.getElementById("categoryId").value;
 
 page = 1;
 
-hasMoreData = true;
-
-/* Clear container */
+/* Clear old wallpapers */
 
 document.getElementById(
 "wallpaperContainer"
 ).innerHTML = "";
 
-/* Load new category */
+/* Load selected category */
 
 loadWallpapers();
 
 }
 
-/* MAIN LOADER */
+/* Load wallpapers */
 
 function loadWallpapers(){
 
-if(isLoading || !hasMoreData) return;
-
-isLoading = true;
-
-/* Get search keyword */
-
-let keyword = "";
-
-let searchBox =
-document.getElementById("searchInput");
-
-if(searchBox){
-
-keyword = searchBox.value.trim();
-
-}
-
-/* Fetch from servlet */
-
 fetch(
 "Home?page=" + page +
-"&categoryId=" + currentCategory +
-"&tags=" + keyword
+"&categoryId=" + currentCategory
 )
 
 .then(response => response.text())
 
 .then(data => {
 
-/* No more data */
-
-if(data.trim() === ""){
-
-hasMoreData = false;
-
-isLoading = false;
-
-return;
-
-}
-
-/* Append cards */
-
 document.getElementById(
 "wallpaperContainer"
 ).innerHTML += data;
 
-/* Next page */
-
 page++;
-
-isLoading = false;
-
-})
-
-.catch(error => {
-
-console.log("Fetch error:", error);
-
-isLoading = false;
 
 });
 
 }
 
-/* INFINITE SCROLL */
+/* First page load */
+
+window.onload = function(){
+
+loadWallpapers();
+
+};
+
+
+/* Detect scroll */
 
 window.addEventListener("scroll", function(){
 
-let scrollTop =
-window.scrollY;
-
-let windowHeight =
-window.innerHeight;
-
-let documentHeight =
-document.documentElement.scrollHeight;
-
 if(
 
-scrollTop + windowHeight
->= documentHeight - 200
+window.innerHeight + window.scrollY
+>= document.body.offsetHeight - 200
 
 ){
 
@@ -308,37 +263,84 @@ loadWallpapers();
 
 });
 
-/* SEARCH */
+
 
 function searchWallpaper(event){
 
 event.preventDefault();
 
-/* Reset */
+/* Get search text */
+
+let keyword =
+document.getElementById(
+"searchInput"
+).value;
+
+/* Reset page */
 
 page = 1;
 
-hasMoreData = true;
+/* Clear old results */
 
 document.getElementById(
 "wallpaperContainer"
 ).innerHTML = "";
 
-/* Load search */
+/* Fetch search */
 
-loadWallpapers();
+fetch(
+"Search?tags=" + keyword +
+"&page=" + page +
+"&categoryId=" + currentCategory
+)
+
+.then(response => response.text())
+
+.then(data => {
+
+document.getElementById(
+"wallpaperContainer"
+).innerHTML = data;
+
+});
 
 }
 
-/* FIRST LOAD */
+function searchWallpaper(event){
 
-window.onload = function(){
+	event.preventDefault();
 
-loadWallpapers();
+	let keyword =
+	document.getElementById(
+	"searchInput"
+	).value;
 
-};
+	page = 1;
+
+	document.getElementById(
+	"wallpaperContainer"
+	).innerHTML = "";
+
+	fetch(
+	"Home?tags=" + keyword +
+	"&categoryId=" + currentCategory +
+	"&page=" + page
+	)
+
+	.then(response => response.text())
+
+	.then(data => {
+
+	document.getElementById(
+	"wallpaperContainer"
+	).innerHTML = data;
+
+	});
+
+	}
 
 </script>
+
 
 </body>
 </html>
